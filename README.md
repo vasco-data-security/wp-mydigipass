@@ -10,6 +10,11 @@ The MYDIGIPASS.COM Development team.
 
 # Installing the plugin
 
+The easiest way is to install the plugin from within your Wordpress installation.
+You can find the plugin [here](http://wordpress.org/extend/plugins/mydigipasscom-secure-login/). 
+
+Or you can install the plugin manually (as usual): 
+
 * copy the plugin folder to `$WP_HOME\wp-content\plugins` folder
 * enable the plugin inside the admin console
 * edit the plugin settings, especially entering the `client-id` and `client-secret`. You can get those from the [developer](http://developer.mydigipass.com) site.
