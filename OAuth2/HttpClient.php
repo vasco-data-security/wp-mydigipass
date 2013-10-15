@@ -69,18 +69,24 @@ class HttpClient
      * @var boolean
      */
     private $_debug = false;
-
+    /**
+     * @var string
+     */
+    private $_password;
     /**
      * @param string $url
      * @param string $method
      * @param string $parameters
      * @param array $header  any additional header which should be set
      */
-    public function __construct($url, $method, $parameters = null, array $header = array()) {
+    public function __construct($url, $method, $parameters = null, array $header = array(), $password = "") {
         $this->_url = $url;
         $this->_method = $method;
         $this->_parameters = $parameters;
         $this->_requestHeader = $header;
+		$this->_password = $password;
+		echo "<br/>".$password . " ". $this->_password ."<br/>";
+		
     }
 
     /**
@@ -116,9 +122,15 @@ class HttpClient
      * executes the curl request
      */
     public function execute() {
+		
         $ch = curl_init();
-
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		if(! $this->_password == ""){			
+			
+			@curl_setopt($ch,CURLOPT_USERPWD,$this->_password);
+		}
         if ($this->_method === 'POST') {
+			
             curl_setopt($ch, CURLOPT_URL, $this->_url);
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $this->_parameters);
@@ -132,8 +144,11 @@ class HttpClient
         if (! empty($this->_requestHeader)) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->_requestHeader);
         }
+		
+
 
         $fullResponse = curl_exec($ch);
+
         $this->_info = curl_getinfo($ch);
 
         $this->_response = substr($fullResponse, $this->_info['header_size'], strlen($fullResponse));

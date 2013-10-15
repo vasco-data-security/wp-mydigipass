@@ -40,14 +40,6 @@ class Digipass_Callback
         return $this->_digipassAuth;
     }
 
-    public function mydigipass_register_callback($rules) {
-        $newrules = array();
-        $newrules['mydigipass\/callback/(.*)'] = 'index.php?code=$matches[1]&state=$matches[2]';
-        $newrules['mydigipass\/unlink(.*)'] = 'index.php?pagename=unlink';
-
-        return $newrules + $rules;
-    }
-
     public function mydigipass_insert_query_vars($vars) {
         array_push($vars, 'mydigipass-action');
         array_push($vars, 'code');
@@ -71,8 +63,6 @@ class Digipass_Callback
             $pagename = $wp_query->get('pagename');
         }
         
-        file_put_contents('wp.log', '$action: ' . $action . "\n" . '$pagename: ' . $pagename . "\n" . $wp_query->get('code') . "\n\n", FILE_APPEND);
-
         switch ($pagename) {
             case 'callback':
                 if (is_user_logged_in()) {
@@ -90,8 +80,6 @@ class Digipass_Callback
                 } else {
                     $_SESSION['code'] = $wp_query->get('code');
                     $_SESSION['state'] = $wp_query->get('state');
-                    file_put_contents('wp.log', print_r($_GET, true) . "\n", FILE_APPEND);
-
 
                     wp_redirect(site_url('wp-login.php', 'login'));
                     echo 'Please wait, logging in.';
@@ -125,9 +113,22 @@ class Digipass_Callback
                     if ($userSearch) { // user exists
                         $uuid = get_user_meta($userSearch->ID, 'digipass_uuid', true);
                         if ($uuid == $userData['uuid']) { // user is linked
+							//connect funcionality													
+							
+							$HClient = new OAuth2\HttpClient(
+								str_replace("/oauth","/api/uuids/connected",$this->digipassHelper()->getBaseUri()),
+								"POST",
+								"uuids=".$uuid,
+								array(),
+								$this->digipassHelper()->getClientId().":".$this->digipassHelper()->getClientSecret()
+							);
+							$HClient->execute();
+														
                             $user = new WP_User($userSearch->ID);
                             update_usermeta($userSearch->ID, 'first_name', $userData['first_name']);
                             update_usermeta($userSearch->ID, 'last_name', $userData['last_name']);
+							
+							
                             if (isset($_SESSION['state']) && $_SESSION['state'] != site_url('wp-login.php', 'login')) {
                                 add_action('login_redirect', array($this, 'redirectToStateUrl'));
                             }
@@ -137,6 +138,7 @@ class Digipass_Callback
                             add_action('login_head', array($this, 'login_form_username')); // pre-fill the username
                             $user = new WP_Error('denied', __('You already have an account with this email on this blog. Please log in to link this account with MyDIGIPASS.'), 'message');
                             remove_action('authenticate', 'wp_authenticate_username_password', 20);
+							
                         }
                     } else { // user does not exist
                         $state = explode('::', $_SESSION['state']);
@@ -146,6 +148,7 @@ class Digipass_Callback
                                 'email' => $userData['email']
                             );
                             $_SESSION['digipass-comment'] = serialize($digipassComment);
+                            $_SESSION['digipass-loggedin'] = true;
                             wp_redirect($state[1]);
                             unset($_SESSION['code']);
                             exit;
@@ -176,6 +179,7 @@ class Digipass_Callback
 
         return $user;
     }
+	
 
     public function save_digipass_uuid($redirect_to, $request, $user) {
         if (isset($_SESSION['digipass-data']) && is_a($user, 'WP_User')) {
@@ -225,10 +229,6 @@ class Digipass_Callback
 }
 $digipassCallback = new Digipass_Callback();
 
-// register the callback url if possible, else prompt for configuration
-if (get_option('permalink_structure')) {
-    add_filter('rewrite_rules_array', array($digipassCallback, 'mydigipass_register_callback'));
-}
 add_filter('query_vars', array($digipassCallback, 'mydigipass_insert_query_vars'));
 
 // process the callback
