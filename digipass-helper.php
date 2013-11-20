@@ -59,13 +59,6 @@ class DigipassHelper
     public function getButtonJs() {
         return '<script type="text/javascript" src="https://static.mydigipass.com/dp_connect.js"></script>';
     }
-    // public function getButtonJs() {
-    //     if ($this->_options['mode'] == 'test') {
-    //         return '<script type="text/javascript" src="https://sandbox.mydigipass.com/dp_connect.js"></script>';
-    //     } else {
-    //         return '<script type="text/javascript" src="https://mydigipass.com/dp_connect.js"></script>';
-    //     }
-    // }
 
     public function getButtonStyle($location) {
         $config = $this->getButtonConfig($location);
