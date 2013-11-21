@@ -32,7 +32,7 @@ class DigipassHelper
         if ($this->_options['mode'] == 'test') {
             return 'https://sandbox.mydigipass.com/oauth';
         } else {
-            return 'https://mydigipass.com/oauth';
+            return 'https://www.mydigipass.com/oauth';
         }
     }
 
@@ -48,15 +48,16 @@ class DigipassHelper
         $style = $this->getButtonStyle($location);
         $help = ($style[1]) ? 'true' : 'false';
         
-        return '<a class="dpplus-connect" data-style="' . $style[0] . '" data-help="' . $help . '" data-text="' . $style[2] . '" data-client-id="' . $this->_options['client_id'] . '" data-redirect-uri="' . $this->_options['callback'] . '" data-state="' . $state . '" href="#">Connect with MYDIGIPASS.COM</a>';
+        $origin = "https://www.mydigipass.com";
+        if ($this->_options['mode'] == 'test') {
+            $origin = "https://sandbox.mydigipass.com";
+        }
+
+        return '<a class="dpplus-connect" data-style="' . $style[0] . '" data-origin="' . $origin . '" data-help="' . $help . '" data-text="' . $style[2] . '" data-client-id="' . $this->_options['client_id'] . '" data-redirect-uri="' . $this->_options['callback'] . '" data-state="' . $state . '" href="#">Connect with MYDIGIPASS.COM</a>';
     }
 
     public function getButtonJs() {
-        if ($this->_options['mode'] == 'test') {
-            return '<script type="text/javascript" src="https://sandbox.mydigipass.com/dp_connect.js"></script>';
-        } else {
-            return '<script type="text/javascript" src="https://mydigipass.com/dp_connect.js"></script>';
-        }
+        return '<script type="text/javascript" src="https://static.mydigipass.com/dp_connect.js"></script>';
     }
 
     public function getButtonStyle($location) {
