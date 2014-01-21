@@ -69,14 +69,21 @@ class Digipass_Callback
                     $response = $this->digipassAuth($wp_query->get('code'))->callApiEndpoint($this->digipassHelper()->getBaseUri() . '/user_data');
                     $userData = json_decode($response, true);
 
-                    if (isset($userData['email']) && $current_user->user_email == $userData['email']) { // link flow
+                   // if (isset($userData['email']) && $current_user->user_email == $userData['email']) { // link flow
+				   $users = get_users(array('meta_key' => 'digipass_uuid', 'meta_value' => $userData['uuid']));
+					foreach ($users as $suser) {
+						$userID=  $suser->ID;
+					}
+					if(!$userID){ 
                         update_user_meta($current_user->ID, 'digipass_uuid', $userData['uuid']);
                         wp_redirect(admin_url('profile.php'));
                         $_SESSION['link'] = true;
                         exit;
-                    } else {
-                        wp_redirect(site_url());
-                    }
+                   } else {
+                       //wp_redirect(site_url());
+					   wp_redirect(admin_url('profile.php'));
+                        $_SESSION['link'] = false;
+                   }
                 } else {
                     $_SESSION['code'] = $wp_query->get('code');
                     $_SESSION['state'] = $wp_query->get('state');
@@ -109,7 +116,14 @@ class Digipass_Callback
                 $userData = json_decode($response, true);
 
                 if (isset($userData['email'])) { // MyDIGIPASS data is valid
-                    $userSearch = get_user_by('email', $userData['email']);
+                    
+					$users = get_users(array('meta_key' => 'digipass_uuid', 'meta_value' => $userData['uuid']));
+					foreach ($users as $suser) {
+						$userID=  $suser->ID;
+					}
+					if($userID){
+						$userSearch = get_user_by('id', $userID);
+					}
                     if ($userSearch) { // user exists
                         $uuid = get_user_meta($userSearch->ID, 'digipass_uuid', true);
                         if ($uuid == $userData['uuid']) { // user is linked
@@ -202,11 +216,14 @@ class Digipass_Callback
     }
 
     public function link_message() {
-        if (isset($_SESSION['link']) && $_SESSION['link']) {
-            echo __('<div class="updated"><p>Sucessfully linked your account to MyDIGIPASS.</p></div>');
-            unset($_SESSION['link']);
-        } else {
-            echo '';
+        if (isset($_SESSION['link'])) {
+			if($_SESSION['link']) {
+				echo __('<div class="updated"><p>Sucessfully linked your account to MyDIGIPASS.</p></div>');
+				unset($_SESSION['link']);
+			} else {
+				echo __('<div class="error"><p>An account is already linked to this MyDIGIPASS.</p></div>');
+				unset($_SESSION['link']);
+			}
         }
     }
 
